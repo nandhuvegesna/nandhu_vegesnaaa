@@ -1,0 +1,43 @@
+version: 0.2
+
+env:
+  variables:
+    CONTAINER_NAME: app   # ECS container name (can also move to CodeBuild env)
+
+phases:
+  pre_build:
+    commands:
+      - echo Logging in to Amazon ECR
+      - aws --version
+
+      # Get account ID dynamically
+      - ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+
+      # Login to ECR
+      - aws ecr get-login-password --region $AWS_REGION |
+        docker login --username AWS --password-stdin $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+
+      # Dynamic image tag (commit ID)
+      - IMAGE_TAG=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
+
+      # Full image URI (NO hardcoding)
+      - IMAGE_URI=$ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$IMAGE_REPO_NAME:$IMAGE_TAG
+
+      - echo Image URI = $IMAGE_URI
+
+  build:
+    commands:
+      - echo Building Docker image
+      - docker build -t $IMAGE_URI .
+
+  post_build:
+    commands:
+      - echo Pushing Docker image
+      - docker push $IMAGE_URI
+
+      - echo Creating imagedefinitions.json for ECS
+      - printf '[{"name":"%s","imageUri":"%s"}]' $CONTAINER_NAME $IMAGE_URI > imagedefinitions.json
+
+artifacts:
+  files:
+    - imagedefinitions.json
