@@ -2,8 +2,8 @@ version: 0.2
 
 env:
   variables:
-    AWS_REGION: ap-south-1
-    IMAGE_REPO_NAME: my-app
+    AWS_REGION: ap-south-2
+    IMAGE_REPO_NAME: new-ecr-repo
     CONTAINER_NAME: app
 
 phases:
@@ -12,14 +12,11 @@ phases:
       - echo Logging in to Amazon ECR...
       - aws --version
 
-      # Login to ECR
-      - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin 232818307792.dkr.ecr.ap-south-1.amazonaws.com
+      - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin 232818307792.dkr.ecr.ap-south-2.amazonaws.com
 
-      # Create image tag
       - IMAGE_TAG=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
 
-      # Correct image URI
-      - IMAGE_URI=232818307792.dkr.ecr.ap-south-1.amazonaws.com/my-app:$IMAGE_TAG
+      - IMAGE_URI=232818307792.dkr.ecr.ap-south-2.amazonaws.com/new-ecr-repo:$IMAGE_TAG
 
       - echo Image URI = $IMAGE_URI
 
