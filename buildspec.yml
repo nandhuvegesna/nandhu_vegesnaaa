@@ -4,7 +4,7 @@ env:
   variables:
     AWS_REGION: ap-south-2
     IMAGE_REPO_NAME: new-ecr-repo
-    CONTAINER_NAME: app
+    CONTAINER_NAME: pipcon
 
 phases:
   pre_build:
