@@ -2,26 +2,21 @@ version: 0.2
 
 env:
   variables:
-    AWS_REGION: ap-south-2
+    AWS_REGION: us-west-2
     IMAGE_REPO_NAME: newimg
-    CONTAINER_NAME: newcon
+    CONTAINER_NAME: cicdcc
 
 phases:
   pre_build:
     commands:
       - echo Logging in to Amazon ECR...
       - aws --version
-
-      # Login to ECR
-      - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin 204998944728.dkr.ecr.ap-south-2.amazonaws.com
-
-      # Create image tag using commit ID
+      - ACCOUNT_ID=204998944728
+      - REPOSITORY_URI=$ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$IMAGE_REPO_NAME
+      - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $REPOSITORY_URI
       - IMAGE_TAG=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
-
-      # Full Image URI
-      - IMAGE_URI=204998944728.dkr.ecr.ap-south-2.amazonaws.com/newimg:$IMAGE_TAG
-
-      - echo Image URI = $IMAGE_URI
+      - IMAGE_URI=$REPOSITORY_URI:$IMAGE_TAG
+      - echo "Image URI: $IMAGE_URI"
 
   build:
     commands:
@@ -32,9 +27,8 @@ phases:
     commands:
       - echo Pushing Docker image...
       - docker push $IMAGE_URI
-
-      # Create imagedefinitions.json for ECS deployment
-      - printf '[{"name":"%s","imageUri":"%s"}]' $CONTAINER_NAME $IMAGE_URI > imagedefinitions.json
+      - printf '[{"name":"%s","imageUri":"%s"}]' "$CONTAINER_NAME" "$IMAGE_URI" > imagedefinitions.json
+      - cat imagedefinitions.json
 
 artifacts:
   files:
