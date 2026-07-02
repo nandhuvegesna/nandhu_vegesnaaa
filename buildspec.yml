@@ -9,23 +9,23 @@ env:
 phases:
   pre_build:
     commands:
-      - echo Logging in to Amazon ECR...
+      - echo "Logging in to Amazon ECR..."
       - aws --version
       - ACCOUNT_ID=204998944728
       - REPOSITORY_URI=$ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$IMAGE_REPO_NAME
       - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $REPOSITORY_URI
       - IMAGE_TAG=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
-      - IMAGE_URI=$REPOSITORY_URI:$IMAGE_TAG
+      - IMAGE_URI="${REPOSITORY_URI}:${IMAGE_TAG}"
       - echo "Image URI: $IMAGE_URI"
 
   build:
     commands:
-      - echo Building Docker image...
+      - echo "Building Docker image..."
       - docker build -t $IMAGE_URI .
 
   post_build:
     commands:
-      - echo Pushing Docker image...
+      - echo "Pushing Docker image..."
       - docker push $IMAGE_URI
       - printf '[{"name":"%s","imageUri":"%s"}]' "$CONTAINER_NAME" "$IMAGE_URI" > imagedefinitions.json
       - cat imagedefinitions.json
